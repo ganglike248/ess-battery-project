@@ -6,14 +6,12 @@ data/interim/
 *.mat
 *.pkl
 
-# 개인 작업 파일 (제출물 아님)
-/30-ESSHealth-scratch.ipynb
-/31-Day1-EDA.ipynb
-/features_day1.csv
-sampleReadme.md
-미니프로젝트_가이드.pdf
-*.docx
-DS-MINI-Design-*.pdf
+# 로컬 작업 파일
+/*.ipynb
+/*.pdf
+/*.docx
+/*.csv
+/sample*.md
 ~$*
 
 # 환경

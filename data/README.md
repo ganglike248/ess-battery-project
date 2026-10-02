@@ -8,7 +8,7 @@ Kaggle : [Data-driven prediction of battery cycle life](https://www.kaggle.com/d
 | 파일 | 배치 | 용도 |
 |---|---|---|
 | `2017-05-12_batchdata_updated_struct_errorcorrect.mat` | Batch 1 | 학습 |
-| `2018-02-20_batchdata_updated_struct_errorcorrect.mat` | Batch 2 | 테스트 (필수) |
+| `2018-02-20_batchdata_updated_struct_errorcorrect.mat` | Batch 2 | 주 테스트 |
 | `2018-04-12_batchdata_updated_struct_errorcorrect.mat` | Batch 3 | 추가 검증 |
 
 `2018-04-03_varcharge...` 파일은 다른 실험(가변 충전)이라 사용하지 않음
@@ -26,4 +26,4 @@ Kaggle : [Data-driven prediction of battery cycle life](https://www.kaggle.com/d
 ## 생성 파일
 - `interim/` : 로딩 캐시 (Git 제외)
 - `processed/features.csv` : 셀 단위 피처 테이블 (`02_feature_engineering.ipynb` 에서 생성)
-- `processed/features_day1.csv` : Day 1 EDA 피처 테이블 (`01_EDA.ipynb` 에서 생성)
+- `processed/features_eda.csv` : EDA 피처 테이블 (`01_EDA.ipynb` 에서 생성)

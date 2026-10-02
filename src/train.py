@@ -1,12 +1,12 @@
 """
-모델 학습 · 검증 · 평가 파이프라인 (Day 1 보고서 5.2 ~ 5.5 구현)
+모델 학습 · 검증 · 평가 파이프라인 (설계 문서 5.2 ~ 5.5 구현)
 
 - Task      : Classification (cycle_life ≥ 550 → Long=1 / Short=0), 지표 F1-Score · Accuracy
 - 모델링    : log10(cycle_life) 회귀 → 예측 수명 550 기준 판정  (회귀는 분류를 위한 학습 수단)
-- 데이터 분할 (가이드 Performance Reporting)
+- 데이터 분할
     Train (B1 CV)       : B1 학습 구간에서 충전 방식 단위 GroupKFold 평균
     Valid (B1 Hold-out) : B1 에서 충전 방식 단위로 약 20% 분리
-    Test  (B2)          : 필수 평가,   Test (B3) : 추가 검증
+    Test  (B2)          : 주 테스트,   Test (B3) : 추가 검증
 - 누수 방지 : 결측 대체값·스케일러·하이퍼파라미터·피처 조합·판정 기준(550)은 모두 B1 안에서만 결정
   (결측 : B2 6셀은 초기 내부저항 미측정(IR=0) → B1 학습 데이터 중앙값으로 대체)
 
@@ -177,7 +177,7 @@ def cv_evaluate(factory, train_df):
 
 
 def evaluate(name, feature_set, factory, b1_tr, b1_ho, b1_all, tests):
-    """한 모델을 가이드 4개 구간(Train CV / Valid / Test B2 / Test B3)에서 평가"""
+    """한 모델을 4개 구간(Train CV / Valid / Test B2 / Test B3)에서 평가"""
     folds = cv_evaluate(factory, b1_tr)
     rows = [dict(split='Train (B1 CV)', **folds.drop(columns=['fold', 'train_short', 'trained']).mean().to_dict(),
                  note=f"{int((~folds['trained']).sum())}개 fold 학습 불가 (학습 fold 에 Short 없음)"
@@ -197,7 +197,7 @@ def evaluate(name, feature_set, factory, b1_tr, b1_ho, b1_all, tests):
 
 
 def guide_table(res, test='B2'):
-    """가이드 Reporting format (for Classification) — F1-Score / Accuracy / 비고"""
+    """성능 리포팅 형식 (Classification) — F1-Score / Accuracy / 비고"""
     r = res.set_index('split')
     tr, va, te = r.loc['Train (B1 CV)'], r.loc['Valid (B1 Hold-out)'], r.loc[f'Test ({test})']
     rows = [
@@ -212,7 +212,7 @@ def guide_table(res, test='B2'):
 
 
 def guide_table_b3(res):
-    """가이드 Reporting format (for Batch 3) — B2 결과와 나란히"""
+    """성능 리포팅 형식 (Batch 3 추가) — B2 결과와 나란히"""
     r = res.set_index('split')
     b2, b3 = r.loc['Test (B2)'], r.loc['Test (B3)']
     t = guide_table(res, 'B2')
@@ -232,8 +232,8 @@ def recalibration_scenario(final, b2, ks=(3, 5, 10), n_rep=300):
     rng = np.random.default_rng(SEED)
     base = final.predict(b2)['score']
     true = b2['log_life'].values
-    rows = [dict(k=0, accuracy=metrics(b2, final.predict(b2))['accuracy'],
-                 macro_f1=metrics(b2, final.predict(b2))['macro_f1'], f1=metrics(b2, final.predict(b2))['f1'])]
+    m0 = metrics(b2, final.predict(b2))
+    rows = [dict(k=0, accuracy=m0['accuracy'], macro_f1=m0['macro_f1'], f1=m0['f1'])]
     for k in ks:
         acc, mf1, f1 = [], [], []
         for _ in range(n_rep):
@@ -285,7 +285,7 @@ def run_all(feat=None, save=True, verbose=True):
     # 2) 누수 점검용 B1 단독 선별 세트
     b1_only, b1_rho = select_b1_only(b1_tr)
 
-    # 3) 후보 모델 평가 (Day 1 보고서 [표 11] + 5.2 / 5.5 비교 실험)
+    # 3) 후보 모델 평가 (설계 문서 [표 11] + 5.2 / 5.5 비교 실험)
     experiments = [
         ('ElasticNet → 550', chosen_name, lambda: RegThreshold('elasticnet', chosen)),
         ('단일 피처 선형회귀 → 550', 'core', lambda: RegThreshold('linear', CORE)),
@@ -320,8 +320,8 @@ def run_all(feat=None, save=True, verbose=True):
 def save_results(out):
     RESULTS.mkdir(exist_ok=True)
     out['perf'].round(4).to_csv(RESULTS / 'model_performance.csv', index=False, encoding='utf-8-sig')
-    out['guide'].round(4).to_csv(RESULTS / 'performance_guide_format.csv', index=False, encoding='utf-8-sig')
-    out['guide_b3'].round(4).to_csv(RESULTS / 'performance_guide_format_b3.csv', index=False, encoding='utf-8-sig')
+    out['guide'].round(4).to_csv(RESULTS / 'performance_report.csv', index=False, encoding='utf-8-sig')
+    out['guide_b3'].round(4).to_csv(RESULTS / 'performance_report_b3.csv', index=False, encoding='utf-8-sig')
     out['selection'].round(4).to_csv(RESULTS / 'feature_set_selection.csv', index=False, encoding='utf-8-sig')
     out['recal'].round(4).to_csv(RESULTS / 'recalibration_scenario.csv', index=False, encoding='utf-8-sig')
     pd.concat(out['errors'].values()).to_csv(RESULTS / 'test_predictions.csv', index=False, encoding='utf-8-sig')

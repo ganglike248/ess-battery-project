@@ -1,5 +1,5 @@
 """
-셀 단위 피처 생성 + 피처 세트 정의 (Day 1 보고서 [표 2] 피처 구성, 5.1 Feature Engineering 구현)
+셀 단위 피처 생성 + 피처 세트 정의 (설계 문서 [표 2] 피처 구성, 5.1 Feature Engineering 구현)
 
 피처는 같은 정의를 두 관측 기간으로 계산
 - w5_   : 사이클 1~5   (ΔQ_5-4)     → 원논문 분류 설정, 5사이클 기준선에 사용
@@ -14,7 +14,7 @@ from scipy import stats
 POLICY_RE = re.compile(r'([\d.]+)C\((\d+)%\)-([\d.]+)C')
 
 # ---------------------------------------------------------------------------
-# 피처 세트 (Day 1 보고서 5.1 / 5.4 / 5.5 와 1:1 대응)
+# 피처 세트 (설계 문서 5.1 / 5.4 / 5.5 와 1:1 대응)
 # ---------------------------------------------------------------------------
 CORE = ['w100_dQ_logvar']                       # 핵심 : ΔQ_100-10 분산(log)
 AUX_CANDIDATES = ['w100_dQ_kurt', 'switch_soc']   # 보조 후보 : 첨도, 2단계 전환 시점 → B1 CV 로 채택 여부 결정
@@ -29,7 +29,7 @@ FEATURE_SETS = {
 # 5사이클 기준선 : 원논문 분류 모델과 같은 관측 기간(사이클 1~5)의 피처 구성
 W5_BASELINE = ['w5_dQ_logvar', 'w5_dQ_logmin', 'QD2', 'w5_QDmax_m_QD2', 'w5_chargetime', 'w5_Tavg', 'w5_IR_min']
 
-# Day 1 Q5 에서 검토한 후보 21개 (B1 단독 선별 세트를 고를 때의 후보 풀)
+# EDA Q5 에서 검토한 후보 21개 (B1 단독 선별 세트를 고를 때의 후보 풀)
 CANDIDATES_21 = ['w5_dQ_logvar', 'w5_dQ_logmin', 'w5_dQ_mean',
                  'w100_dQ_logvar', 'w100_dQ_logmin', 'w100_dQ_mean', 'w100_dQ_skew', 'w100_dQ_kurt',
                  'QD2', 'w5_QDmax_m_QD2', 'w100_QDmax_m_QD2', 'w100_fade_slope',
@@ -101,7 +101,7 @@ def build_feature_table(cells, meta):
 
 def select_b1_only(train_df, candidates=CANDIDATES_21, k=4, corr_max=0.9):
     """
-    테스트셋 누수 점검용 'B1 단독 선별' 세트 (Day 1 보고서 Q5 한계 / 5.5)
+    테스트셋 누수 점검용 'B1 단독 선별' 세트 (설계 문서 Q5 한계 / 5.5)
     - B1 학습 데이터만 보고 |Spearman(피처, log 수명)| 이 큰 순으로 고르되,
       이미 고른 피처와 |상관| > corr_max 이면 건너뜀 (다중공선성 처리만 동일하게 적용)
     - B2·B3 정보는 전혀 사용하지 않음

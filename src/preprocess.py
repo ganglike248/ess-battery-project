@@ -1,5 +1,5 @@
 """
-데이터 로딩 · 정제 (Day 1 보고서 [표 1] 데이터 정제 규칙 구현)
+데이터 로딩 · 정제 (설계 문서 [표 1] 데이터 정제 규칙 구현)
 
 - .mat(HDF5) 파일에서 필요한 필드만 h5py 로 읽음 (cycle_life, policy, summary, Qdlin 사이클 1~100, Vdlin)
 - 정제 규칙
@@ -19,12 +19,12 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA_DIRS = [ROOT / 'data' / 'raw', ROOT / 'archive']          # 둘 중 .mat 파일이 있는 곳을 사용
 CACHE = ROOT / 'data' / 'interim' / 'cells.pkl'
 
-THRESHOLD = 550        # Long / Short 기준 사이클 (가이드)
+THRESHOLD = 550        # Long / Short 기준 사이클 (원논문 분류 기준)
 EOL_AH = 0.88          # 수명 종료 기준 = 공칭 1.1Ah 의 80%
 
 BATCH_FILES = {
     'B1': '2017-05-12_batchdata_updated_struct_errorcorrect.mat',   # 학습
-    'B2': '2018-02-20_batchdata_updated_struct_errorcorrect.mat',   # 테스트 (필수)
+    'B2': '2018-02-20_batchdata_updated_struct_errorcorrect.mat',   # 주 테스트
     'B3': '2018-04-12_batchdata_updated_struct_errorcorrect.mat',   # 추가 검증 (선택)
 }
 BATCHES = list(BATCH_FILES)
