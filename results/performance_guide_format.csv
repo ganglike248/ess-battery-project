@@ -1,0 +1,7 @@
+﻿구분,F1-Score,Accuracy,비고
+Train (Batch 1 CV),0.9818,0.9667,
+Valid (Batch 1 Hold-out),1.0,1.0,
+Test (Batch 2),0.45,0.4359,
+Gap (Train-Valid),-0.0182,-0.0333,(+) : 과적합 의심
+Gap (Valid-Test),0.55,0.5641,(+) : 배치간 일반화 저하 의심
+Gap (Target-Test),,0.5151,Target : Accuracy 95.1%

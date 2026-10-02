@@ -1,0 +1,10 @@
+﻿구분,F1-Score,Accuracy,비고
+Train (Batch 1 CV),0.9818,0.9667,
+Valid (Batch 1 Hold-out),1.0,1.0,
+Test (Batch 2),0.45,0.4359,
+Gap (Train-Valid),-0.0182,-0.0333,(+) : 과적합 의심
+Gap (Valid-Test),0.55,0.5641,(+) : 배치간 일반화 저하 의심
+Gap (Target-Test),,0.5151,Target : Accuracy 95.1%
+Test (Batch 3),0.9873,0.975,Short 1개 → 수명 MAPE 11.9%·순위 상관 0.76 중심 해석
+Gap (Batch2-Batch3),-0.5373,-0.5391,Test 성능 간 비교
+"Gap (Target-Test, Batch 3)",,-0.024,"Batch 3 기준, 원논문 성능 비교 (B3 정확도는 ""전부 Long"" 과 같은 값 → 성능 근거 아님)"

@@ -1,0 +1,23 @@
+# 원본·캐시 데이터 (대용량)
+archive/
+archive.zip
+data/raw/
+data/interim/
+*.mat
+*.pkl
+
+# 개인 작업 파일 (제출물 아님)
+/30-ESSHealth-scratch.ipynb
+/31-Day1-EDA.ipynb
+/features_day1.csv
+sampleReadme.md
+미니프로젝트_가이드.pdf
+*.docx
+DS-MINI-Design-*.pdf
+~$*
+
+# 환경
+.DS_Store
+__pycache__/
+.ipynb_checkpoints/
+.venv/

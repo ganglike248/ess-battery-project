@@ -1,0 +1,21 @@
+{
+  "model": "ElasticNet (log10 cycle_life) → 550 threshold",
+  "feature_set": "core",
+  "features": [
+    "w100_dQ_logvar"
+  ],
+  "params": {
+    "alpha": 0.001,
+    "l1_ratio": 0.1
+  },
+  "coef": {
+    "w100_dQ_logvar": -0.06756
+  },
+  "b1_only_features": [
+    "w100_dQ_logvar",
+    "w100_dQ_logmin",
+    "w100_fade_slope",
+    "Cavg"
+  ],
+  "seed": 42
+}

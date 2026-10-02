@@ -1,0 +1,5 @@
+﻿feature_set,n_features,cv_mape,cv_mape_std,cv_spearman
+core,1,7.666,2.8781,0.6714
+core+kurt,2,8.0061,2.5182,0.6714
+core+switch,2,8.1727,3.153,0.7571
+core+kurt+switch,3,56.6624,110.0115,0.7643
