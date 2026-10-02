@@ -219,7 +219,7 @@ def guide_table_b3(res):
     extra = pd.DataFrame([
         ['Test (Batch 3)', b3.f1, b3.accuracy, f'Short {int(b3.n_short)}개 → 수명 MAPE {b3.mape:.1f}%·순위 상관 {b3.spearman:.2f} 중심 해석'],
         ['Gap (Batch2-Batch3)', b2.f1 - b3.f1, b2.accuracy - b3.accuracy, 'Test 성능 간 비교'],
-        ['Gap (Target-Test, Batch 3)', np.nan, TARGET_ACC - b3.accuracy, 'Batch 3 기준, 원논문 성능 비교 (B3 정확도는 "전부 Long" 과 같은 값 → 성능 근거 아님)'],
+        ['Gap (Target-Test, Batch 3)', np.nan, TARGET_ACC - b3.accuracy, '원논문 비교 (B3 정확도 = 전부 Long 예측과 동일 → 근거 아님)'],
     ], columns=t.columns)
     return pd.concat([t, extra], ignore_index=True)
 
@@ -331,10 +331,96 @@ def save_results(out):
                        b1_only_features=out['b1_only'], seed=SEED), fp, ensure_ascii=False, indent=2)
 
 
+# ---------------------------------------------------------------------------
+# 콘솔 리포트
+# ---------------------------------------------------------------------------
+def _width(s):
+    """터미널 표시 폭 (한글 등 전각 문자는 2칸)"""
+    import unicodedata
+    return sum(2 if unicodedata.east_asian_width(ch) in 'WF' else 1 for ch in str(s))
+
+
+def _table(headers, rows, align=None, indent=2):
+    """전각 문자 폭을 고려해 열을 맞춘 표 출력. align : 열별 'l' / 'r'"""
+    align = align or ['l'] + ['r'] * (len(headers) - 1)
+    cols = list(zip(headers, *rows))
+    widths = [max(_width(v) for v in c) for c in cols]
+
+    def fmt(cells):
+        out = []
+        for v, w, a in zip(cells, widths, align):
+            pad = ' ' * (w - _width(v))
+            out.append(f'{v}{pad}' if a == 'l' else f'{pad}{v}')
+        return (' ' * indent + '  '.join(out)).rstrip()
+
+    print(fmt(headers))
+    print(' ' * indent + '  '.join('─' * w for w in widths))
+    for r in rows:
+        print(fmt(r))
+
+
+def _f(x, nd=3, pct=False):
+    if x is None or (isinstance(x, float) and np.isnan(x)):
+        return '—'
+    return f'{x:.1f}%' if pct else f'{x:+.{nd}f}' if nd < 0 else f'{x:.{nd}f}'
+
+
+def _section(no, title, note=''):
+    print(f'\n[{no}] {title}' + (f'  ({note})' if note else ''))
+
+
+def print_report(o):
+    line = '=' * 78
+    print(f'\n{line}\n  ESS 배터리 장/단수명 분류 — 학습 · 평가 결과\n{line}')
+
+    _section(1, '데이터 분할', '충전 방식 단위 분할')
+    rows = []
+    for name, df in [('B1 학습 구간 (Train CV)', o['b1_tr']), ('B1 Hold-out (Valid)', o['b1_ho']),
+                     ('B2 (Test)', o['tests']['B2']), ('B3 (추가 검증)', o['tests']['B3'])]:
+        rows.append([name, len(df), int(df['label'].sum()), int((df['label'] == 0).sum()),
+                     int(df['censored'].sum()), df[GROUP].nunique()])
+    _table(['구간', '셀', 'Long', 'Short', '중도 종료', '충전 방식'], rows)
+
+    _section(2, '피처 세트 선택', 'B1 학습 구간 GroupKFold, 수명 오차 낮을수록 좋음')
+    sel = o['selection'].sort_values('n_features')
+    _table(['피처 세트', '피처 수', 'CV 수명 오차', '표준편차'],
+           [[r.feature_set + (' ◀ 선택' if r.feature_set == o['chosen_name'] else ''), r.n_features,
+             _f(r.cv_mape, pct=True), _f(r.cv_mape_std, pct=True)] for r in sel.itertuples()])
+    print(f"  → 최종 피처 : {', '.join(o['chosen'])} / ElasticNet {o['params']}")
+
+    _section(3, '최종 모델 성능', 'ElasticNet → 550 판정')
+    g = o['guide_b3']
+    _table(['구분', 'F1-Score', 'Accuracy', '비고'],
+           [[r['구분'], _f(r['F1-Score']), _f(r['Accuracy']), r['비고'] if isinstance(r['비고'], str) else '']
+            for _, r in g.iterrows()], align=['l', 'r', 'r', 'l'])
+    m = o['perf'][o['perf']['model'] == 'ElasticNet → 550'].set_index('split')
+    print('\n  보조 지표 (B1·B3 는 Short 가 1개 이하라 정확도만으로 판단 불가)')
+    _table(['구간', '수명 오차', '순위 상관', 'AUC', 'macro-F1'],
+           [[s, _f(m.loc[s, 'mape'], pct=True), _f(m.loc[s, 'spearman'], 2), _f(m.loc[s, 'auc']), _f(m.loc[s, 'macro_f1'])]
+            for s in m.index])
+
+    _section(4, '후보 모델 비교', '동일 분할·동일 평가')
+    p = o['perf'].pivot_table(index='model', columns='split', values=['mape', 'accuracy', 'auc'], sort=False)
+    _table(['모델', 'B1 CV 오차', 'B1 CV Acc', 'B2 Acc', 'B2 AUC', 'B3 오차'],
+           [[name, _f(p.loc[name, ('mape', 'Train (B1 CV)')], pct=True), _f(p.loc[name, ('accuracy', 'Train (B1 CV)')]),
+             _f(p.loc[name, ('accuracy', 'Test (B2)')]), _f(p.loc[name, ('auc', 'Test (B2)')]),
+             _f(p.loc[name, ('mape', 'Test (B3)')], pct=True)] for name in p.index])
+    notes = o['perf'][o['perf']['note'] != ''][['model', 'split', 'note']]
+    for r in notes.itertuples():
+        print(f'  ※ {r.model} / {r.split} : {r.note}')
+
+    _section(5, '운영 시나리오 — 소량 라벨 재보정', 'B2, 본 성능과 분리')
+    _table(['라벨 수 k', 'Accuracy', 'macro-F1'],
+           [[int(r.k), _f(r.accuracy), _f(r.macro_f1)] for r in o['recal'].itertuples()])
+
+    e2 = o['errors']['B2']
+    _section(6, '오류 분석', 'B2')
+    _table(['셀 구분', '셀 수', '정확도', '예측/실제 수명'],
+           [['newstructure' if ns else '일반 셀', len(d), _f(d['correct'].mean()), f"{d['ratio_pred_true'].median():.2f}배"]
+            for ns, d in e2.groupby('newstruct')])
+
+    print(f'\n{line}\n  저장 : {RESULTS.relative_to(ROOT)}/  (performance_report*.csv, model_performance.csv, ...)\n{line}')
+
+
 if __name__ == '__main__':
-    o = run_all()
-    pd.set_option('display.width', 200)
-    print('선택된 피처 세트 :', o['chosen_name'], o['chosen'])
-    print(o['selection'].round(3).to_string(index=False))
-    print(o['guide'].round(3).to_string(index=False))
-    print(o['perf'][['model', 'split', 'f1', 'accuracy', 'macro_f1', 'mape', 'auc']].round(3).to_string(index=False))
+    print_report(run_all())

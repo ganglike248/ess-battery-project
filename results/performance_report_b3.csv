@@ -7,4 +7,4 @@ Gap (Valid-Test),0.55,0.5641,(+) : 배치간 일반화 저하 의심
 Gap (Target-Test),,0.5151,Target : Accuracy 95.1%
 Test (Batch 3),0.9873,0.975,Short 1개 → 수명 MAPE 11.9%·순위 상관 0.76 중심 해석
 Gap (Batch2-Batch3),-0.5373,-0.5391,Test 성능 간 비교
-"Gap (Target-Test, Batch 3)",,-0.024,"Batch 3 기준, 원논문 성능 비교 (B3 정확도는 ""전부 Long"" 과 같은 값 → 성능 근거 아님)"
+"Gap (Target-Test, Batch 3)",,-0.024,원논문 비교 (B3 정확도 = 전부 Long 예측과 동일 → 근거 아님)
